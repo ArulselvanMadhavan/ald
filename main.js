@@ -236,4 +236,67 @@ document.addEventListener('DOMContentLoaded', function() {
     if (chamberPressureDisplayElement) {
         chamberPressureDisplayElement.textContent = `${getRandomChamberPressureInTorr()} Torr`;
     }
+
+    // Particle Counter Logic
+    let atomCount = Math.floor(Math.random() * 96) + 5; // Random integer between 5 and 100
+    const particleCountDisplayElement = document.getElementById('particle-count-value');
+    if (particleCountDisplayElement) {
+        particleCountDisplayElement.textContent = atomCount;
+    }
+
+    function updateAtomCount(newCount) {
+        if (particleCountDisplayElement) {
+            atomCount = Math.max(0, Math.min(100, newCount)); // Clamp between 0 and 100
+            particleCountDisplayElement.textContent = atomCount;
+        }
+    }
+
+    function animateAtomCount(startCount, endCount, durationMs) {
+        const steps = Math.abs(endCount - startCount);
+        if (steps === 0) return; // Nothing to animate
+
+        const intervalMs = durationMs / steps;
+        let currentCount = startCount;
+
+        const intervalId = setInterval(() => {
+            if (startCount < endCount) {
+                currentCount++;
+            } else {
+                currentCount--;
+            }
+            updateAtomCount(currentCount);
+
+            if ((startCount < endCount && currentCount >= endCount) ||
+                (startCount >= endCount && currentCount <= endCount)) {
+                clearInterval(intervalId);
+            }
+        }, intervalMs);
+    }
+
+    const pulseButton = document.getElementById('pulse-button');
+    const purgeButton = document.getElementById('purge-button');
+    let isAnimating = false; // Prevent multiple animations
+
+    function handleControlButton(button, targetCount) {
+        if (isAnimating) return; // Prevent overlapping animations
+        isAnimating = true;
+        button.classList.add('bg-opacity-50'); // Visual feedback for "clicked" state
+
+        animateAtomCount(atomCount, targetCount, 5000);
+
+        setTimeout(() => {
+            button.classList.remove('bg-opacity-50');
+            isAnimating = false;
+        }, 5000); // Match animation duration
+    }
+
+    if (pulseButton && purgeButton) {
+        pulseButton.addEventListener('click', () => {
+            handleControlButton(pulseButton, 100);
+        });
+
+        purgeButton.addEventListener('click', () => {
+            handleControlButton(purgeButton, 0);
+        });
+    }
 });
