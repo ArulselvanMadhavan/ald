@@ -191,4 +191,49 @@ document.addEventListener('DOMContentLoaded', function() {
     if (simulateTabButton) {
         simulateTabButton.click();
     }
+
+       // Precursor Level Display Logic
+    function getRandomPercentage(min, max) {
+        return Math.floor(Math.random() * (max - min + 1)) + min;
+    }
+
+    function updatePrecursorLevelDisplay(elementId) {
+        const displayElement = document.getElementById(elementId);
+        if (!displayElement) return;
+
+        const percentage = getRandomPercentage(5, 95);
+        displayElement.textContent = `${percentage}%`;
+
+        // Remove existing color classes
+        displayElement.classList.remove('bg-green-500', 'bg-yellow-400', 'bg-red-500', 'text-gray-800');
+
+        if (percentage >= 50) {
+            displayElement.classList.add('bg-green-500');
+            displayElement.classList.add('text-white');
+        } else if (percentage >= 15) {
+            displayElement.classList.add('bg-yellow-400');
+            displayElement.classList.add('text-gray-800'); // Darker text for yellow background
+        } else {
+            displayElement.classList.add('bg-red-500');
+            displayElement.classList.add('text-white');
+        }
+    }
+
+    updatePrecursorLevelDisplay('precursor-level-1-value');
+    updatePrecursorLevelDisplay('precursor-level-2-value');
+
+        // Chamber Pressure Display Logic
+    function getRandomChamberPressureInTorr() {
+        // Typical ALD operating range can be from ~0.05 Torr to ~5 Torr,
+        // but often in the 0.1 to 2 Torr range for many processes.
+        const minTorr = 0.1;  // Minimum pressure in Torr
+        const maxTorr = 2.0;  // Maximum pressure in Torr
+        const pressure = Math.random() * (maxTorr - minTorr) + minTorr;
+        return pressure.toFixed(2); // Format to 2 decimal places for display
+    }
+
+    const chamberPressureDisplayElement = document.getElementById('chamber-pressure-value');
+    if (chamberPressureDisplayElement) {
+        chamberPressureDisplayElement.textContent = `${getRandomChamberPressureInTorr()} Torr`;
+    }
 });
