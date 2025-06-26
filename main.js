@@ -37,111 +37,116 @@ function zipArraysToObjects(inputArray) {
 }
 document.addEventListener('DOMContentLoaded', function() {
 
-    // Instantiate Precursor with name = "TMA"
-    const tmaPrecursor = new Precursor("TMA");
-    console.log("TMA Precursor Initialized:", tmaPrecursor); // Optional: for verification
+    // Global variables to store precursor and ZeroD instances
+    let tmaPrecursor = null;
+    let h2oPrecursor = null;
+    let tmaZeroD = null;
+    let h2oZeroD = null;
 
-    // Define variables for ALDideal arguments
-    const nsitesValue = 1e19;
-    const beta0Value = 1e-3;
-    const fValue = 1;
-    const dmValue = 1.0;
-    // Instantiate ALDideal using the variables
-    const aldIdealInstance = new ALDideal(tmaPrecursor, nsitesValue, beta0Value, fValue, dmValue);
-    console.log("ALDideal Instance Initialized:", aldIdealInstance); // Optional: for verification
-    
-    // Instantiate ZeroD
-    const zeroDModel = new ZeroD(aldIdealInstance, { T: 500, p: 0.1 * 1e5 / 760 });
-    console.log("ZeroD Model Initialized:", zeroDModel); // Optional: for verification
-    
+    // Function to create precursor instances
+    function createPrecursorInstances() {
+        const molarMassInput = document.getElementById('molar-mass');
+        const molarMass = molarMassInput ? parseFloat(molarMassInput.value) : 144.17;
+        
+        // Create TMA precursor instance
+        tmaPrecursor = new Precursor('TMA', molarMass, null);
+        console.log("TMA Precursor Initialized:", tmaPrecursor);
+        
+        // Create H2O precursor instance
+        h2oPrecursor = new Precursor('H2O', molarMass, null);
+        console.log("H2O Precursor Initialized:", h2oPrecursor);
+    }
+
+    // Function to create ZeroD instances
+    function createZeroDInstances() {
+        const temperatureInput = document.getElementById('temperature');
+        const pressureInput = document.getElementById('pressure');
+        
+        const temperature = temperatureInput ? parseFloat(temperatureInput.value) : 500;
+        const pressure = pressureInput ? parseFloat(pressureInput.value) : 13.157894736842104;
+        
+        // Define variables for ALDideal arguments
+        const nsitesValue = 1e19;
+        const beta0Value = 1e-3;
+        const fValue = 1;
+        const dmValue = 1.0;
+        
+        // Create ALDideal instances for each precursor
+        const tmaAldIdeal = new ALDideal(tmaPrecursor, nsitesValue, beta0Value, fValue, dmValue);
+        const h2oAldIdeal = new ALDideal(h2oPrecursor, nsitesValue, beta0Value, fValue, dmValue);
+        
+        // Create ZeroD instances
+        tmaZeroD = new ZeroD(tmaAldIdeal, { T: temperature, p: pressure });
+        h2oZeroD = new ZeroD(h2oAldIdeal, { T: temperature, p: pressure });
+        
+        console.log("TMA ZeroD Model Initialized:", tmaZeroD);
+        console.log("H2O ZeroD Model Initialized:", h2oZeroD);
+    }
+
+    // Function to update ZeroD instances with new parameters
+    function updateZeroDInstances() {
+        const temperatureInput = document.getElementById('temperature');
+        const pressureInput = document.getElementById('pressure');
+        
+        const temperature = temperatureInput ? parseFloat(temperatureInput.value) : 500;
+        const pressure = pressureInput ? parseFloat(pressureInput.value) : 13.157894736842104;
+        
+        // Define variables for ALDideal arguments
+        const nsitesValue = 1e19;
+        const beta0Value = 1e-3;
+        const fValue = 1;
+        const dmValue = 1.0;
+        
+        // Create ALDideal instances for each precursor
+        const tmaAldIdeal = new ALDideal(tmaPrecursor, nsitesValue, beta0Value, fValue, dmValue);
+        const h2oAldIdeal = new ALDideal(h2oPrecursor, nsitesValue, beta0Value, fValue, dmValue);
+        
+        // Update ZeroD instances
+        tmaZeroD = new ZeroD(tmaAldIdeal, { T: temperature, p: pressure });
+        h2oZeroD = new ZeroD(h2oAldIdeal, { T: temperature, p: pressure });
+        
+        console.log("ZeroD instances updated with T:", temperature, "p:", pressure);
+    }
+
+    // Initialize precursor and ZeroD instances
+    createPrecursorInstances();
+    createZeroDInstances();
+
     // Tab switching logic
     const tabElements = document.querySelectorAll('button[role="tab"]');
-
-    var g; // Dygraph instance
-    var data = {
-        pressure: [],
-        temperature: [],
-        thickness: [],
-        yield: []
-    };
-
-    var dataType = 'pressure'; // Initial data type
-
-    var time = new Date();
-
-    // Function to initialize data for a specific type
-    function initializeData(type) {
-        let mean = Object.keys(data).indexOf(type) + 1; // Assign mean based on index
-        if (mean < 1) mean = 1; // Ensure mean is at least 1 for Poisson
-        for (let i = 0; i < 10; i++) {
-            time = new Date(time.getTime() + 1000);
-            data[type].push([time, poisson(mean)]);
-        }
-    }
-
-    // Initialize all data types
-    Object.keys(data).forEach(initializeData);
-
-    function updateChart(type) {
-        if (!type) type = dataType; // Use current data type if not specified
-        time = new Date(time.getTime() + 1000); // Add 1 second
-        let mean = Object.keys(data).indexOf(type) + 1; // Assign mean based on index
-        if (mean === -1) mean = 0;
-        let value = poisson(mean);
-
-        data[type].push([time, value]);
-        if (data[type].length > 100) {
-            data[type].shift(); // Maintain max 100 values
-        }
-
-        if (g) {
-            g.updateOptions({ 'file': data[type] });
-        }
-    }
-
-    function renderChart(type) {
-        if (!type) type = dataType;
-        let yLabel;
-        switch (type) {
-            case 'temperature': yLabel = 'Temperature (°C)'; break;
-            case 'thickness': yLabel = 'Thickness (mm)'; break;
-            case 'yield': yLabel = 'Yield Strength (MPa)'; break;
-            default: yLabel = 'Pressure (psi)';
-        }
-
-        g = new Dygraph(document.getElementById("stock-chart"), data[type], {
-            xLabelHeight: 20,
-            xValueFormatter: function(ms) { return new Date(ms).toLocaleTimeString(); },
-            xTicker: Dygraph.dateTicker,
-            yLabelWidth: 20,
-            ylabel: yLabel
-        });
-        dataType = type;
-    }
-
-    setInterval(updateChart, 1000);
-
-    // Dropdown event listener for the Results tab
-    const dataTypeDropdown = document.getElementById('data-type');
-    if (dataTypeDropdown) {
-        dataTypeDropdown.addEventListener('change', function() {
-            dataType = this.value;
-            // Only render if the results tab is active
-            const resultsTab = document.getElementById('results-tab');
-            if (resultsTab && resultsTab.getAttribute('aria-selected') === 'true') {
-                renderChart(dataType);
-            }
-        });
-    }
 
     // Event listener for "Plot Saturation curve" button
     const plotButton = document.getElementById('plot-saturation-button');
     if (plotButton) {
         plotButton.addEventListener('click', function() {
+            // Get the selected precursor
+            const precursorSelect = document.getElementById('precursor-select');
+            const selectedPrecursor = precursorSelect ? precursorSelect.value : 'TMA';
+            
+            // Choose the appropriate ZeroD instance based on selected precursor
+            let selectedZeroD;
+            if (selectedPrecursor === 'H2O') {
+                selectedZeroD = h2oZeroD;
+                console.log('Using H2O ZeroD instance for saturation curve');
+            } else {
+                selectedZeroD = tmaZeroD;
+                console.log('Using TMA ZeroD instance for saturation curve');
+            }
+            
+            // Update ZeroD instances with current parameters before plotting
+            updateZeroDInstances();
+            
+            // Get the updated instance based on selection
+            if (selectedPrecursor === 'H2O') {
+                selectedZeroD = h2oZeroD;
+            } else {
+                selectedZeroD = tmaZeroD;
+            }
+            
             const saturationSpec = {
                 "$schema": "https://vega.github.io/schema/vega-lite/v5.json",
                 "description": "A simple line chart with embedded data.",
-                "data": {"values": zipArraysToObjects(zeroDModel.saturation_curve())},
+                "data": {"values": zipArraysToObjects(selectedZeroD.saturation_curve())},
                 "mark": "line",
                 "encoding": {
                     "x": {"field": "0", "type": "quantitative", "title": "Time"},
@@ -149,6 +154,46 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             };
             vegaEmbed('#vis', saturationSpec, { "actions": false }).catch(console.error);
+        });
+    }
+
+    // Event listener for precursor selection
+    const precursorSelect = document.getElementById('precursor-select');
+    if (precursorSelect) {
+        precursorSelect.addEventListener('change', function() {
+            const selectedPrecursor = this.value;
+            
+            if (selectedPrecursor === 'H2O') {
+                // Update molar mass to 18.01 g/mol
+                const molarMassInput = document.getElementById('molar-mass');
+                if (molarMassInput) {
+                    molarMassInput.value = '18.01';
+                }
+                
+                // Update temperature to 500K
+                const temperatureInput = document.getElementById('temperature');
+                if (temperatureInput) {
+                    temperatureInput.value = '500';
+                }
+                
+                // Update pressure to 0.80 Pa
+                const pressureInput = document.getElementById('pressure');
+                if (pressureInput) {
+                    pressureInput.value = '0.80';
+                }
+                
+                // Update precursor and ZeroD instances with new parameters
+                createPrecursorInstances();
+                createZeroDInstances();
+                
+                console.log('H2O precursor selected - Updated values: Molar Mass=18.01, Temperature=500K, Pressure=0.80 Pa');
+            } else {
+                // For TMA, update precursor and ZeroD instances with current parameters
+                createPrecursorInstances();
+                createZeroDInstances();
+                
+                console.log('TMA precursor selected - Updated instances with current parameters');
+            }
         });
     }
 
@@ -173,15 +218,6 @@ document.addEventListener('DOMContentLoaded', function() {
             const targetPanel = document.querySelector(this.dataset.tabsTarget);
             if (targetPanel) {
                 targetPanel.classList.remove('hidden');
-            }
-
-            // If results tab is activated, render or resize chart
-            if (this.id === 'results-tab') {
-                if (!g && document.getElementById("stock-chart")) { // Ensure chart div exists
-                    renderChart(dataType);
-                } else if (g) {
-                    g.resize();
-                }
             }
         });
     });
