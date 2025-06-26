@@ -223,18 +223,9 @@ document.addEventListener('DOMContentLoaded', function() {
     updatePrecursorLevelDisplay('precursor-level-2-value');
 
         // Chamber Pressure Display Logic
-    function getRandomChamberPressureInTorr() {
-        // Typical ALD operating range can be from ~0.05 Torr to ~5 Torr,
-        // but often in the 0.1 to 2 Torr range for many processes.
-        const minTorr = 0.1;  // Minimum pressure in Torr
-        const maxTorr = 2.0;  // Maximum pressure in Torr
-        const pressure = Math.random() * (maxTorr - minTorr) + minTorr;
-        return pressure.toFixed(2); // Format to 2 decimal places for display
-    }
-
     const chamberPressureDisplayElement = document.getElementById('chamber-pressure-value');
     if (chamberPressureDisplayElement) {
-        chamberPressureDisplayElement.textContent = `${getRandomChamberPressureInTorr()} Torr`;
+        chamberPressureDisplayElement.textContent = `1.000 Torr`;
     }
 
     // Particle Counter Logic
