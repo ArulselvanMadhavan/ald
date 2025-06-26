@@ -8,8 +8,12 @@
     <script src="https://cdn.jsdelivr.net/npm/vega@5"></script>
     <script src="https://cdn.jsdelivr.net/npm/vega-lite@5"></script>
     <script src="https://cdn.jsdelivr.net/npm/vega-embed@6"></script>
-  <script type="module" src="./chem.js"></script> 
   <script type="module" src="./main.js"></script>
+  <script type="module" src="./particle_counter.js"></script>
+  <script type="module" src="./chamber_controls.js"></script>
+  <script type="module" src="./temperature_controls.js"></script>
+  <script type="module" src="./flow_rate_controls.js"></script>
+  <script type="module" src="./cycles_controls.js"></script>
   <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
 </head>
 <body class="bg-gray-100 font-sans">
@@ -68,34 +72,93 @@
       </div>
       <div class="hidden p-4 rounded-lg bg-white shadow" id="configure" role="tabpanel" aria-labelledby="configure-tab">
         <h2 class="text-xl font-semibold mb-4">Configure</h2>
-        <div class="flex space-x-4 mb-8">
-          <button id="start-button" class="px-6 py-2 bg-green-500 text-white font-semibold rounded-md hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-opacity-50 shadow-sm">Start</button>
-          <button id="stop-button" class="px-6 py-2 bg-red-500 text-white font-semibold rounded-md hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-50 shadow-sm">Stop</button>
-        </div>
-
-        <div>
-          <h3 class="text-lg font-medium text-gray-900 mb-3">Precursor Levels</h3>
-          <div class="space-y-3">
-            <div class="flex items-center space-x-3">
-              <div class="w-40 text-sm font-medium text-gray-700 p-2 border border-gray-200 rounded-md bg-gray-50 text-center">Precursor 1: TMA</div>
-              <div id="precursor-level-1-value" class="w-20 h-8 flex items-center justify-center text-sm font-semibold text-white rounded-md shadow-sm">
-                --%
+        
+        <div class="flex space-x-8">
+          <!-- Left side: All controls -->
+          <div class="flex-1">
+            <div>
+              <h3 class="text-lg font-medium text-gray-900 mb-3">Precursor Levels</h3>
+              <div class="space-y-3">
+                <div class="flex items-center space-x-3">
+                  <div class="w-40 text-sm font-medium text-gray-700 p-2 border border-gray-200 rounded-md bg-gray-50 text-center">Precursor 1: TMA</div>
+                  <div id="precursor-level-1-value" class="w-20 h-8 flex items-center justify-center text-sm font-semibold text-white rounded-md shadow-sm">
+                    --%
+                  </div>
+                </div>
+                <div class="flex items-center space-x-3">
+                  <div class="w-40 text-sm font-medium text-gray-700 p-2 border border-gray-200 rounded-md bg-gray-50 text-center">Precursor 2: H2O</div>
+                  <div id="precursor-level-2-value" class="w-20 h-8 flex items-center justify-center text-sm font-semibold text-white rounded-md shadow-sm">
+                    --%
+                  </div>
+                </div>
               </div>
             </div>
-            <div class="flex items-center space-x-3">
-              <div class="w-40 text-sm font-medium text-gray-700 p-2 border border-gray-200 rounded-md bg-gray-50 text-center">Precursor 2: H2O</div>
-              <div id="precursor-level-2-value" class="w-20 h-8 flex items-center justify-center text-sm font-semibold text-white rounded-md shadow-sm">
-                --%
+            <div class="mt-6">
+              <div class="flex items-center space-x-3">
+                <div class="w-40 text-sm font-medium text-gray-700 p-2 border border-gray-200 rounded-md bg-gray-50 text-center">Chamber Pressure:</div>
+                <div id="chamber-pressure-value" class="w-28 h-8 flex items-center justify-center text-sm font-semibold text-gray-800 rounded-md shadow-sm border border-gray-300 bg-gray-100">
+                  -.-- Torr
+                </div>
+                <div class="chamber-controls flex space-x-2">
+                  <button id="pump-down-button" class="font-semibold py-2 px-4 rounded-md transition-colors duration-150 ease-in-out">Pump down</button>
+                  <button id="vent-button" class="font-semibold py-2 px-4 rounded-md transition-colors duration-150 ease-in-out">Vent</button>
+                </div>
               </div>
+            </div>
+            <div class="mt-6">
+              <div class="flex items-center space-x-3">
+                <div class="w-40 text-sm font-medium text-gray-700 p-2 border border-gray-200 rounded-md bg-gray-50 text-center">Chamber Temp:</div>
+                <div id="chamber-temperature-value" class="w-28 h-8 flex items-center justify-center text-sm font-semibold text-gray-800 rounded-md shadow-sm border border-gray-300 bg-gray-100">
+                  --°C
+                </div>
+                <div class="temperature-controls flex space-x-2">
+                  <button id="heat-up-button" class="font-semibold py-2 px-4 rounded-md transition-colors duration-150 ease-in-out">Heat up</button>
+                </div>
+              </div>
+            </div>
+            <div class="mt-6">
+              <div class="flex items-center space-x-3">
+                <div class="w-40 text-sm font-medium text-gray-700 p-2 border border-gray-200 rounded-md bg-gray-50 text-center">Flow rate:</div>
+                <div class="flow-rate-controls flex items-center space-x-2">
+                  <input type="number" id="flow-rate-input" min="1" max="4" value="1" class="w-20 h-8 text-center text-sm font-semibold text-gray-800 rounded-md shadow-sm border border-gray-300 bg-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                  <span class="text-sm text-gray-600">turns/pulse</span>
+                </div>
+              </div>
+            </div>
+            <div class="mt-6">
+              <div id="particle-counter-section" class="bg-white flex items-center space-x-4">
+              <div class="w-40 text-sm font-medium text-gray-700 p-2 border border-gray-200 rounded-md bg-gray-50 text-center">
+                Particle Counter:
+              </div>
+              <div id="atom-count-display" class="w-20 h-8 flex items-center justify-center text-sm font-semibold text-gray-900 bg-gray-100 rounded-md shadow-sm tabular-nums">
+                --
+              </div>
+              <div class="particle-controls flex space-x-2">
+                  <!-- Base classes for buttons are here. JS will toggle state-specific (color/interaction) classes. -->
+                  <button id="pulse-button" class="font-semibold py-2 px-4 rounded-md transition-colors duration-150 ease-in-out">Pulse</button>
+                  <button id="purge-button" class="font-semibold py-2 px-4 rounded-md transition-colors duration-150 ease-in-out">Purge</button>
+              </div>
+            </div>
+            </div>
+            <div class="mt-6">
+              <div class="flex items-center space-x-3">
+                <div class="w-40 text-sm font-medium text-gray-700 p-2 border border-gray-200 rounded-md bg-gray-50 text-center">Num of cycles:</div>
+                <div class="cycles-controls flex items-center space-x-2">
+                  <input type="number" id="cycles-input" min="1" max="10" value="1" class="w-20 h-8 text-center text-sm font-semibold text-gray-800 rounded-md shadow-sm border border-gray-300 bg-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                  <span class="text-sm text-gray-600">cycles</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="flex space-x-4 mt-8">
+              <button id="start-button" class="px-6 py-2 bg-green-500 text-white font-semibold rounded-md hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-opacity-50 shadow-sm">Run recipe</button>
+              <button id="stop-button" class="px-6 py-2 bg-red-500 text-white font-semibold rounded-md hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-50 shadow-sm">Stop Recipe</button>
             </div>
           </div>
-        </div>
-        <div class="mt-6">
-          <div class="flex items-center space-x-3">
-            <div class="w-40 text-sm font-medium text-gray-700 p-2 border border-gray-200 rounded-md bg-gray-50 text-center">Chamber Pressure:</div>
-            <div id="chamber-pressure-value" class="w-28 h-8 flex items-center justify-center text-sm font-semibold text-gray-800 rounded-md shadow-sm border border-gray-300 bg-gray-100">
-              -.-- Torr
-            </div>
+
+          <!-- Right side: Thickness vs Cycles Graph -->
+          <div class="flex-1">
+            <div id="thickness-chart" style="width: 100%; height: 400px;"></div>
           </div>
         </div>
       </div>
